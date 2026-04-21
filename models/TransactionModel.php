@@ -86,6 +86,7 @@ class TransactionModel extends Model
                 t.id,
                 t.product_name,
                 t.product_type,
+                t.product_price,
                 t.total_amount,
                 t.status,
                 t.created_at,
