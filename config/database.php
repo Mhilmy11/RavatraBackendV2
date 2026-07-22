@@ -1,27 +1,30 @@
 <?php
 
-class Database
-{
-    public static function connect()
-    {
-        try {
-            $host = env('DB_HOST');
-            $db = env('DB_NAME');
-            $user = env('DB_USER');
-            $pass = env('DB_PASS');
+declare(strict_types=1);
 
-            $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
+/**
+ * ------------------------------------------------------------
+ * Database Configuration
+ * ------------------------------------------------------------
+ * Database connection configuration loaded from .env
+ */
 
-            $pdo = new PDO($dsn, $user, $pass, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+return [
 
-            return $pdo;
+    'driver' => 'mysql',
 
-        } catch (PDOException $e) {
-            die("DB ERROR: " . $e->getMessage());
-        }
-    }
-}
+    'host' => Env::get('DB_HOST'),
+
+    'port' => Env::get('DB_PORT', '3306'),
+
+    'database' => Env::get('DB_NAME'),
+
+    'username' => Env::get('DB_USER'),
+
+    'password' => Env::get('DB_PASS'),
+
+    'charset' => 'utf8mb4',
+
+    'collation' => 'utf8mb4_unicode_ci',
+
+];

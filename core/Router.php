@@ -1,108 +1,99 @@
 <?php
 
-class Router
+declare(strict_types=1);
+
+final class Router
 {
-    private $routes = [];
+    /**
+     * Registered Routes
+     */
+    private static array $routes = [];
 
-    public function get($path, $handler)
+    /**
+     * Register Route
+     */
+    private static function register(string $method, string $uri, array $action): void
     {
-        $this->routes[] = [
-            'method' => 'GET',
-            'path' => $path,
-            'handler' => $handler
-        ];
+        self::$routes[strtoupper($method)][trim($uri, '/')] = $action;
     }
 
-    public function post($path, $handler)
+    /**
+     * GET Route
+     */
+    public static function get(string $uri, array $action): void
     {
-        $this->routes[] = [
-            'method' => 'POST',
-            'path' => $path,
-            'handler' => $handler
-        ];
+        self::register('GET', $uri, $action);
     }
 
-    public function put($path, $handler)
+    /**
+     * POST Route
+     */
+    public static function post(string $uri, array $action): void
     {
-        $this->routes[] = [
-            'method' => 'PUT',
-            'path' => $path,
-            'handler' => $handler
-        ];
+        self::register('POST', $uri, $action);
     }
 
-    public function delete($path, $handler)
+    /**
+     * PUT Route
+     */
+    public static function put(string $uri, array $action): void
     {
-        $this->routes[] = [
-            'method' => 'DELETE',
-            'path' => $path,
-            'handler' => $handler
-        ];
+        self::register('PUT', $uri, $action);
     }
 
-    public function run()
+    /**
+     * PATCH Route
+     */
+    public static function patch(string $uri, array $action): void
+    {
+        self::register('PATCH', $uri, $action);
+    }
+
+    /**
+     * DELETE Route
+     */
+    public static function delete(string $uri, array $action): void
+    {
+        self::register('DELETE', $uri, $action);
+    }
+
+    /**
+     * Dispatch Route
+     */
+    public static function dispatch(): void
     {
         $method = $_SERVER['REQUEST_METHOD'];
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 
-        foreach ($this->routes as $route) {
+        // Hilangkan prefix "api" jika ada
+        if (str_starts_with($uri, 'api/')) {
+            $uri = substr($uri, 4);
+        }
 
-            // convert {id} jadi regex
-            $pattern = preg_replace('#\{id\}#', '(\d+)', $route['path']);
+        $routes = self::$routes[$method] ?? [];
 
-            // cocokkan route
-            if ($route['method'] === $method && preg_match("#^$pattern$#", $uri, $matches)) {
+        foreach ($routes as $route => $action) {
 
-                array_shift($matches); // hapus full match
+            $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route);
+            $pattern = '#^' . $pattern . '$#';
 
-                return $this->execute($route['handler'], $matches);
+            if (preg_match($pattern, $uri, $matches)) {
+
+                array_shift($matches);
+
+                [$controller, $function] = $action;
+
+                $instance = new $controller();
+
+                call_user_func_array([$instance, $function], $matches);
+
+                return;
             }
         }
 
-        http_response_code(404);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Route not found'
-        ]);
-    }
-
-    private function execute($handler, $params = [])
-    {
-        list($controller, $method) = explode('@', $handler);
-
-        $controllerPath = __DIR__ . '/../controllers/' . $controller . '.php';
-
-        if (!file_exists($controllerPath)) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Controller not found'
-            ]);
-            return;
-        }
-
-        require_once $controllerPath;
-
-        if (!class_exists($controller)) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Controller class not found'
-            ]);
-            return;
-        }
-
-        $instance = new $controller();
-
-        if (!method_exists($instance, $method)) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Method not found'
-            ]);
-            return;
-        }
-
-        return call_user_func_array([$instance, $method], $params);
+        Response::error(
+            'Route not found',
+            HTTP_NOT_FOUND
+        );
     }
 }
