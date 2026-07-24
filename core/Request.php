@@ -5,55 +5,73 @@ declare(strict_types=1);
 final class Request
 {
     /**
-     * Get HTTP Method
+     * HTTP Method
      */
-    public function method(): string
+    public static function method(): string
     {
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
     }
 
     /**
-     * Get All Input
+     * All Request Data
      */
-    public function all(): array
+    public static function all(): array
     {
         return array_merge(
             $_GET,
             $_POST,
-            $this->json()
+            self::json()
         );
     }
 
     /**
-     * Get Input Value
+     * Single Input
      */
-    public function input(string $key, mixed $default = null): mixed
+    public static function input(string $key, mixed $default = null): mixed
     {
-        $data = $this->all();
+        $data = self::all();
 
         return $data[$key] ?? $default;
     }
 
     /**
-     * Get Query Parameter
+     * Query Parameter
      */
-    public function query(string $key, mixed $default = null): mixed
+    public static function query(string $key, mixed $default = null): mixed
     {
         return $_GET[$key] ?? $default;
     }
 
     /**
-     * Get Uploaded File
+     * Only Selected Keys
      */
-    public function file(string $key): ?array
+    public static function only(array $keys): array
+    {
+        $result = [];
+
+        foreach ($keys as $key) {
+            $value = self::query($key);
+
+            if ($value !== null && $value !== '') {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Uploaded File
+     */
+    public static function file(string $key): ?array
     {
         return $_FILES[$key] ?? null;
     }
 
     /**
-     * Get Request Header
+     * Request Header
      */
-    public function header(string $key): ?string
+    public static function header(string $key): ?string
     {
         $headers = getallheaders();
 
@@ -61,9 +79,9 @@ final class Request
     }
 
     /**
-     * Get JSON Body
+     * JSON Body
      */
-    public function json(): array
+    public static function json(): array
     {
         $content = file_get_contents('php://input');
 
@@ -72,19 +90,28 @@ final class Request
         return is_array($data) ? $data : [];
     }
 
-    /**
-     * Check POST Request
-     */
-    public function isPost(): bool
+    public static function isGet(): bool
     {
-        return $this->method() === 'POST';
+        return self::method() === 'GET';
     }
 
-    /**
-     * Check GET Request
-     */
-    public function isGet(): bool
+    public static function isPost(): bool
     {
-        return $this->method() === 'GET';
+        return self::method() === 'POST';
+    }
+
+    public static function isPut(): bool
+    {
+        return self::method() === 'PUT';
+    }
+
+    public static function isDelete(): bool
+    {
+        return self::method() === 'DELETE';
+    }
+
+    public static function isPatch(): bool
+    {
+        return self::method() === 'PATCH';
     }
 }
