@@ -13,4 +13,4 @@ declare(strict_types=1);
 // ADMIN
 // =========================
 
-// Router::get('/admin/dashboard', [DashboardController::class, 'index']);
+Router::get('/products', [ProductController::class, 'index']);
