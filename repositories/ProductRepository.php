@@ -122,6 +122,7 @@ final class ProductRepository
             pembicara,
             facility,
             package_link,
+            phone_admin,
             is_featured,
             status,
             created_at,
