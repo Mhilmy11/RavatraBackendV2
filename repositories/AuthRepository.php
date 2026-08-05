@@ -11,9 +11,6 @@ final class AuthRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Check Email Exists
-     */
     public function emailExists(string $email): bool
     {
         $sql = "
@@ -32,9 +29,6 @@ final class AuthRepository
         return (bool) $stmt->fetch();
     }
 
-    /**
-     * Get Last User Code
-     */
     public function getLastUserCode(): ?string
     {
         $sql = "
@@ -49,9 +43,6 @@ final class AuthRepository
         return $stmt->fetchColumn() ?: null;
     }
 
-    /**
-     * Register User
-     */
     public function register(array $data): bool
     {
         $sql = "
@@ -98,9 +89,6 @@ final class AuthRepository
         ]);
     }
 
-    /**
-     * Find User By Email
-     */
     public function findByEmail(string $email): ?array
     {
         $sql = "
@@ -131,9 +119,6 @@ final class AuthRepository
         return $user ?: null;
     }
 
-    /**
-     * Find User By User Code
-     */
     public function findByUserCode(string $userCode): ?array
     {
         $sql = "

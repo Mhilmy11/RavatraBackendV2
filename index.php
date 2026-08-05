@@ -54,10 +54,16 @@ require_once BASE_PATH . '/utils/CodeGenerator.php';
 
 require_once BASE_PATH . '/repositories/ProductRepository.php';
 require_once BASE_PATH . '/repositories/AuthRepository.php';
+require_once BASE_PATH . '/repositories/CheckoutRepository.php';
+require_once BASE_PATH . '/repositories/OrderRepository.php';
 
 require_once BASE_PATH . '/apps/user/ProductController.php';
+require_once BASE_PATH . '/apps/user/CheckoutController.php';
+
+require_once BASE_PATH . '/apps/admin/OrderController.php';
 
 require_once BASE_PATH . '/auth/AuthController.php';
+
 
 require_once BASE_PATH . '/config/routes.php';
 

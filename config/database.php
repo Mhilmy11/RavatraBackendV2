@@ -2,13 +2,6 @@
 
 declare(strict_types=1);
 
-/**
- * ------------------------------------------------------------
- * Database Configuration
- * ------------------------------------------------------------
- * Database connection configuration loaded from .env
- */
-
 return [
 
     'driver' => 'mysql',

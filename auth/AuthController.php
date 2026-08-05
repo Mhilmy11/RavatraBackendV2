@@ -91,8 +91,32 @@ final class AuthController
     /**
      * Login User
      */
-    public function login(): void
+    public function loginUser(): void
     {
+        $this->login(
+            'USER',
+            7 * 24 * 60 * 60 // 7 Days
+        );
+    }
+
+    /**
+     * Login Admin
+     */
+    public function loginAdmin(): void
+    {
+        $this->login(
+            'ADMIN',
+            30 * 60 // 30 Minutes
+        );
+    }
+
+    /**
+     * Login
+     */
+    private function login(
+        string $expectedRole,
+        int $sessionLifetime
+    ): void {
         $email = strtolower(trim((string) $this->request->input('email')));
         $password = (string) $this->request->input('password');
 
@@ -131,6 +155,17 @@ final class AuthController
             return;
         }
 
+        // Check Role
+        if ($user['role'] !== $expectedRole) {
+
+            Response::error(
+                'Unauthorized.',
+                HTTP_FORBIDDEN
+            );
+
+            return;
+        }
+
         // Verify Password
         if (!password_verify($password, $user['password'])) {
 
@@ -147,20 +182,30 @@ final class AuthController
             session_start();
         }
 
-        // Session Lifetime
-        $expiredAt = ($user['role'] === 'ADMIN')
-            ? time() + (30 * 60)          // 30 Minutes
-            : time() + (7 * 24 * 60 * 60); // 7 Days
-
+        // Save Session
+        $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['user_code'] = $user['user_code'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['firstname'] = $user['firstname'];
         $_SESSION['login_time'] = time();
-        $_SESSION['expired_at'] = $expiredAt;
+        $_SESSION['expired_at'] = time() + $sessionLifetime;
 
         Response::success(
             [],
             'Login successfully.'
+        );
+    }
+
+    /**
+     * Logout
+     */
+    public function logout(): void
+    {
+        AuthMiddleware::logout();
+
+        Response::success(
+            [],
+            'Logout successfully.'
         );
     }
 

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+define(
+    'APP_URL',
+    'http://localhost:5173'
+);
+
 /*
 |--------------------------------------------------------------------------
 | User Roles

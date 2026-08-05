@@ -4,19 +4,10 @@ declare(strict_types=1);
 
 final class Database
 {
-    /**
-     * Singleton Instance
-     */
     private static ?Database $instance = null;
 
-    /**
-     * PDO Connection
-     */
     private PDO $connection;
 
-    /**
-     * Prevent direct object creation.
-     */
     private function __construct()
     {
         $config = require __DIR__ . '/../config/database.php';
@@ -52,9 +43,6 @@ final class Database
         }
     }
 
-    /**
-     * Get Singleton Instance
-     */
     public static function getInstance(): self
     {
         if (self::$instance === null) {
@@ -64,33 +52,21 @@ final class Database
         return self::$instance;
     }
 
-    /**
-     * Get PDO Connection
-     */
     public function getConnection(): PDO
     {
         return $this->connection;
     }
 
-    /**
-     * Begin Database Transaction
-     */
     public function beginTransaction(): bool
     {
         return $this->connection->beginTransaction();
     }
 
-    /**
-     * Commit Transaction
-     */
     public function commit(): bool
     {
         return $this->connection->commit();
     }
 
-    /**
-     * Rollback Transaction
-     */
     public function rollback(): bool
     {
         return $this->connection->rollBack();

@@ -11,29 +11,22 @@ final class ProductController
         $this->repository = new ProductRepository();
     }
 
-    /**
-     * GET /products
-     */
     public function index(): never
     {
         $filters = [];
 
-        // Filter Product Type
         if (!empty($_GET['type'])) {
             $filters['type'] = trim($_GET['type']);
         }
 
-        // Featured Product
         if (isset($_GET['featured'])) {
             $filters['featured'] = (int) $_GET['featured'];
         }
 
-        // Search Product
         if (!empty($_GET['search'])) {
             $filters['search'] = trim($_GET['search']);
         }
 
-        // Limit
         if (!empty($_GET['limit'])) {
             $filters['limit'] = (int) $_GET['limit'];
         }
@@ -46,9 +39,6 @@ final class ProductController
         );
     }
 
-    /**
-     * Get Detail Product
-     */
     public function show(string $slug): void
     {
         $product = $this->repository->findBySlug($slug);
