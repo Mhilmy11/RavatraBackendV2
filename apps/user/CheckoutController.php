@@ -20,14 +20,8 @@ final class CheckoutController
         string $checkoutToken
     ): void {
 
-        /**
-         * User Login Required
-         */
         AuthMiddleware::handle();
 
-        /**
-         * Find Checkout
-         */
         $checkout = $this->repository
             ->findByToken($checkoutToken);
 
