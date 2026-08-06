@@ -15,6 +15,7 @@ Router::get('/products', [ProductController::class, 'index']);
 
 Router::post('/admin/login', [AuthController::class, 'loginAdmin']);
 Router::post('/admin/logout', [AuthController::class, 'logout']);
+Router::get('/admin/profile', [AuthController::class, 'profile']);
 Router::post('/admin/orders', [OrderController::class, 'store']);
 
 
