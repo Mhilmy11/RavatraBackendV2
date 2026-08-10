@@ -14,9 +14,6 @@ final class AuthController
         $this->request = new Request();
     }
 
-    /**
-     * Register User
-     */
     public function register(): void
     {
         $firstname = trim((string) $this->request->input('firstname'));
@@ -88,9 +85,6 @@ final class AuthController
         );
     }
 
-    /**
-     * Login User
-     */
     public function loginUser(): void
     {
         $this->login(
@@ -99,9 +93,6 @@ final class AuthController
         );
     }
 
-    /**
-     * Login Admin
-     */
     public function loginAdmin(): void
     {
         $this->login(
@@ -110,9 +101,6 @@ final class AuthController
         );
     }
 
-    /**
-     * Login
-     */
     private function login(
         string $expectedRole,
         int $sessionLifetime
@@ -120,7 +108,6 @@ final class AuthController
         $email = strtolower(trim((string) $this->request->input('email')));
         $password = (string) $this->request->input('password');
 
-        // Required Validation
         if (empty($email) || empty($password)) {
 
             Response::error(
@@ -131,7 +118,6 @@ final class AuthController
             return;
         }
 
-        // Find User
         $user = $this->repository->findByEmail($email);
 
         if (!$user) {
@@ -144,7 +130,6 @@ final class AuthController
             return;
         }
 
-        // Check Status
         if ($user['status'] !== 'ACTIVE') {
 
             Response::error(
@@ -155,7 +140,6 @@ final class AuthController
             return;
         }
 
-        // Check Role
         if ($user['role'] !== $expectedRole) {
 
             Response::error(
@@ -166,7 +150,6 @@ final class AuthController
             return;
         }
 
-        // Verify Password
         if (!password_verify($password, $user['password'])) {
 
             Response::error(
@@ -177,12 +160,10 @@ final class AuthController
             return;
         }
 
-        // Start Session
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        // Save Session
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['user_code'] = $user['user_code'];
         $_SESSION['role'] = $user['role'];
@@ -196,9 +177,6 @@ final class AuthController
         );
     }
 
-    /**
-     * Logout
-     */
     public function logout(): void
     {
         AuthMiddleware::logout();
@@ -209,9 +187,6 @@ final class AuthController
         );
     }
 
-    /**
-     * User Profile
-     */
     public function profile(): void
     {
         AuthMiddleware::handle();

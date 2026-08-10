@@ -22,6 +22,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:5174',
     'https://ravatraacademy.id',
     'https://www.ravatraacademy.id',
 ];
@@ -56,11 +57,14 @@ require_once BASE_PATH . '/repositories/ProductRepository.php';
 require_once BASE_PATH . '/repositories/AuthRepository.php';
 require_once BASE_PATH . '/repositories/CheckoutRepository.php';
 require_once BASE_PATH . '/repositories/OrderRepository.php';
+require_once BASE_PATH . '/repositories/TransactionRepository.php';
+
 
 require_once BASE_PATH . '/apps/user/ProductController.php';
 require_once BASE_PATH . '/apps/user/CheckoutController.php';
 
 require_once BASE_PATH . '/apps/admin/OrderController.php';
+require_once BASE_PATH . '/apps/admin/TransactionController.php';
 
 require_once BASE_PATH . '/auth/AuthController.php';
 

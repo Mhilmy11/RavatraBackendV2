@@ -109,4 +109,68 @@ final class CheckoutRepository
 
         ]);
     }
+
+    public function findByCheckoutToken(
+        string $checkoutToken
+    ): ?array {
+        $sql = "
+            SELECT
+                id,
+                transaction_code,
+                checkout_token,
+                user_id,
+                created_by,
+                product_id,
+                deal_price,
+                payment_proof,
+                status,
+                notes,
+                reject_reason,
+                claimed_at,
+                submitted_at,
+                approved_at,
+                rejected_at,
+                expired_at,
+                approved_by,
+                rejected_by,
+                created_at,
+                updated_at
+            FROM transactions
+            WHERE checkout_token = :checkout_token
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->execute([
+            'checkout_token' => $checkoutToken
+        ]);
+
+        $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $transaction ?: null;
+    }
+
+    public function submitPaymentProof(
+        int $transactionId,
+        string $paymentProof
+    ): bool {
+        $sql = "
+            UPDATE transactions
+            SET
+                payment_proof = :payment_proof,
+                status = :status,
+                submitted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = :id
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            'payment_proof' => $paymentProof,
+            'status' => STATUS_WAITING_APPROVAL,
+            'id' => $transactionId
+        ]);
+    }
 }
