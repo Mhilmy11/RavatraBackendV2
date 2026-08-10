@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+require_once BASE_PATH . '/vendor/autoload.php';
 require_once BASE_PATH . '/config/constants.php';
 
 require_once BASE_PATH . '/core/Database.php';
