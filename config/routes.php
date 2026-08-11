@@ -7,6 +7,7 @@ Router::post('/account/register', [AuthController::class, 'register']);
 Router::post('/account/login', [AuthController::class, 'loginUser']);
 Router::post('/account/logout', [AuthController::class, 'logout']);
 Router::get('/account/profile', [AuthController::class, 'profile']);
+Router::get('/account/transactions', [ProfileController::class, 'transactions']);
 
 
 Router::get('/products/{slug}', [ProductController::class, 'show']);
@@ -21,7 +22,7 @@ Router::get('/admin/transactions', [TransactionController::class, 'index']);
 Router::get('/admin/transactions/{transaction_code}', [TransactionController::class, 'show']);
 Router::post('/admin/transactions/{transaction_code}/approve', [TransactionController::class, 'approve']);
 Router::post('/admin/transactions/{transaction_code}/reject', [TransactionController::class, 'reject']);
-
+Router::post('/admin/transactions/{transaction_code}/invoice', [TransactionController::class, 'generateInvoice']);
 
 Router::get('/checkout/{checkout_token}', [CheckoutController::class, 'show']);
 Router::post('/checkout/{checkoutToken}/payment', [CheckoutController::class, 'submitPaymentProof']);

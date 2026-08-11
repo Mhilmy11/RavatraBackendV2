@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
+require_once BASE_PATH . '/services/InvoiceService.php';
+
 final class TransactionController
 {
     private TransactionRepository $repository;
+    private InvoiceService $invoiceService;
 
 
     public function __construct()
     {
         $this->repository = new TransactionRepository();
+        $this->invoiceService = new InvoiceService();
     }
 
     public function index(): never
@@ -208,5 +212,100 @@ final class TransactionController
             null,
             'Transaction rejected successfully'
         );
+    }
+
+    public function generateInvoice(string $transactionCode): void
+    {
+        /**
+         * Find Transaction
+         */
+        $transaction = $this->repository->findForInvoice(
+            $transactionCode
+        );
+
+        if (!$transaction) {
+            Response::error(
+                'Transaction not found',
+                HTTP_NOT_FOUND
+            );
+
+            return;
+        }
+
+        /**
+         * Invoice can only be generated
+         * for PAID transaction
+         */
+        if ($transaction['status'] !== 'PAID') {
+            Response::error(
+                'Invoice can only be generated for paid transactions',
+                HTTP_BAD_REQUEST
+            );
+
+            return;
+        }
+
+        /**
+         * Invoice already exists
+         */
+        if (
+            !empty($transaction['invoice_number']) &&
+            !empty($transaction['invoice_path'])
+        ) {
+            Response::success(
+                [
+                    'invoice_number' => $transaction['invoice_number'],
+                    'invoice_path' => $transaction['invoice_path'],
+                    'invoice_generated_at' =>
+                        $transaction['invoice_generated_at'],
+                ],
+                'Invoice already exists'
+            );
+
+            return;
+        }
+
+        try {
+            /**
+             * Generate Invoice
+             */
+            $invoice = $this->invoiceService->generate(
+                $transaction
+            );
+
+            /**
+             * Save Invoice Information
+             */
+            $saved = $this->repository->saveInvoice(
+                (int) $transaction['id'],
+                $invoice['invoice_number'],
+                $invoice['invoice_path'],
+                $invoice['invoice_generated_at']
+            );
+
+            if (!$saved) {
+                Response::error(
+                    'Failed to save invoice information',
+                    HTTP_INTERNAL_SERVER_ERROR
+                );
+
+                return;
+            }
+
+            /**
+             * Success
+             */
+            Response::success(
+                $invoice,
+                'Invoice generated successfully'
+            );
+        } catch (Throwable $e) {
+            Response::error(
+                'Failed to generate invoice',
+                HTTP_INTERNAL_SERVER_ERROR
+            );
+
+            return;
+        }
     }
 }

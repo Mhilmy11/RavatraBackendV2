@@ -382,4 +382,107 @@ final class TransactionRepository
 
         return $stmt->rowCount() > 0;
     }
+
+    public function findForInvoice(string $transactionCode): ?array
+    {
+        $sql = "
+        SELECT
+            t.id,
+            t.transaction_code,
+            t.deal_price,
+            t.status,
+            t.created_at,
+            t.invoice_number,
+            t.invoice_path,
+            t.invoice_generated_at,
+
+            CONCAT(
+                u.firstname,
+                ' ',
+                u.lastname
+            ) AS customer_name,
+
+            CONCAT(
+                s.firstname,
+                ' ',
+                s.lastname
+            ) AS sales_name,
+
+            p.product_name
+
+        FROM transactions t
+
+        LEFT JOIN users u
+            ON u.id = t.user_id
+
+        LEFT JOIN users s
+            ON s.id = t.created_by
+
+        INNER JOIN products p
+            ON p.id = t.product_id
+
+        WHERE t.transaction_code = :transaction_code
+
+        LIMIT 1
+    ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->bindValue(
+            ':transaction_code',
+            $transactionCode,
+            PDO::PARAM_STR
+        );
+
+        $stmt->execute();
+
+        $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $transaction ?: null;
+    }
+
+    public function saveInvoice(
+        int $transactionId,
+        string $invoiceNumber,
+        string $invoicePath,
+        string $generatedAt
+    ): bool {
+        $sql = "
+        UPDATE transactions
+        SET
+            invoice_number = :invoice_number,
+            invoice_path = :invoice_path,
+            invoice_generated_at = :invoice_generated_at,
+            updated_at = NOW()
+        WHERE id = :id
+    ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->bindValue(
+            ':invoice_number',
+            $invoiceNumber,
+            PDO::PARAM_STR
+        );
+
+        $stmt->bindValue(
+            ':invoice_path',
+            $invoicePath,
+            PDO::PARAM_STR
+        );
+
+        $stmt->bindValue(
+            ':invoice_generated_at',
+            $generatedAt,
+            PDO::PARAM_STR
+        );
+
+        $stmt->bindValue(
+            ':id',
+            $transactionId,
+            PDO::PARAM_INT
+        );
+
+        return $stmt->execute();
+    }
 }

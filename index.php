@@ -59,10 +59,12 @@ require_once BASE_PATH . '/repositories/AuthRepository.php';
 require_once BASE_PATH . '/repositories/CheckoutRepository.php';
 require_once BASE_PATH . '/repositories/OrderRepository.php';
 require_once BASE_PATH . '/repositories/TransactionRepository.php';
+require_once BASE_PATH . '/repositories/ProfileRepository.php';
 
 
 require_once BASE_PATH . '/apps/user/ProductController.php';
 require_once BASE_PATH . '/apps/user/CheckoutController.php';
+require_once BASE_PATH . '/apps/user/ProfileController.php';
 
 require_once BASE_PATH . '/apps/admin/OrderController.php';
 require_once BASE_PATH . '/apps/admin/TransactionController.php';
