@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 define(
     'APP_URL',
-    'http://localhost:5173'
+    // 'http://localhost:5173'
+    'https://ravatraacademy.id'
 );
 
 /*
