@@ -22,45 +22,27 @@ final class InvoiceService
         }
     }
 
-    /**
-     * Generate Invoice
-     */
     public function generate(array $transaction): array
     {
-        /**
-         * Transaction must be PAID
-         */
         if (($transaction['status'] ?? null) !== 'PAID') {
             throw new RuntimeException(
                 'Invoice can only be generated for paid transactions.'
             );
         }
 
-        /**
-         * Generate Invoice Number
-         */
         $invoiceNumber = $this->generateInvoiceNumber(
             $transaction['transaction_code']
         );
 
-        /**
-         * Generate PDF filename
-         */
         $filename = $this->generateFilename(
             $invoiceNumber
         );
 
-        /**
-         * Generate PDF
-         */
         $pdfContent = $this->generatePdf(
             $transaction,
             $invoiceNumber
         );
 
-        /**
-         * Save PDF
-         */
         $filePath = $this->invoiceDirectory . '/' . $filename;
 
         $saved = file_put_contents(
@@ -74,9 +56,6 @@ final class InvoiceService
             );
         }
 
-        /**
-         * Database relative path
-         */
         $relativePath = 'invoice/' . $filename;
 
         return [
@@ -86,9 +65,6 @@ final class InvoiceService
         ];
     }
 
-    /**
-     * Generate Invoice Number
-     */
     private function generateInvoiceNumber(
         string $transactionCode
     ): string {
@@ -98,9 +74,6 @@ final class InvoiceService
             $transactionCode;
     }
 
-    /**
-     * Generate PDF Filename
-     */
     private function generateFilename(
         string $invoiceNumber
     ): string {
@@ -111,9 +84,6 @@ final class InvoiceService
         ) . '.pdf';
     }
 
-    /**
-     * Generate PDF Content
-     */
     private function generatePdf(
         array $transaction,
         string $invoiceNumber
@@ -149,9 +119,6 @@ final class InvoiceService
         return $dompdf->output();
     }
 
-    /**
-     * Build Invoice HTML
-     */
     private function buildHtml(
         array $transaction,
         string $invoiceNumber
@@ -459,9 +426,6 @@ final class InvoiceService
 HTML;
     }
 
-    /**
-     * Format Currency
-     */
     private function formatRupiah(
         float $amount
     ): string {

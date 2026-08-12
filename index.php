@@ -24,7 +24,9 @@ $allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'https://ravatraacademy.id',
+    'https://admin.ravatraacademy.id',
     'https://www.ravatraacademy.id',
+    'https://www.admin.ravatraacademy.id',
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

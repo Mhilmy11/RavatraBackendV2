@@ -11,15 +11,6 @@ final class ProductRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Get Product List
-     *
-     * Available Filters:
-     * - type
-     * - featured
-     * - search
-     * - limit
-     */
     public function getAll(array $filters = []): array
     {
         $sql = "
@@ -100,9 +91,6 @@ final class ProductRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Find Product By Slug
-     */
     public function findBySlug(string $slug): ?array
     {
         $sql = "
