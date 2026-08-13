@@ -89,7 +89,8 @@ final class AuthController
     {
         $this->login(
             'USER',
-            7 * 24 * 60 * 60 // 7 Days
+            7 * 24 * 60 * 60,
+            'RAVATRA_USER_SESSION'
         );
     }
 
@@ -97,13 +98,15 @@ final class AuthController
     {
         $this->login(
             'ADMIN',
-            30 * 60 // 30 Minutes
+            30 * 60,
+            'RAVATRA_ADMIN_SESSION'
         );
     }
 
     private function login(
         string $expectedRole,
-        int $sessionLifetime
+        int $sessionLifetime,
+        string $sessionName
     ): void {
         $email = strtolower(trim((string) $this->request->input('email')));
         $password = (string) $this->request->input('password');
@@ -161,8 +164,11 @@ final class AuthController
         }
 
         if (session_status() === PHP_SESSION_NONE) {
+            session_name($sessionName);
             session_start();
         }
+
+        session_regenerate_id(true);
 
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['user_code'] = $user['user_code'];
@@ -177,8 +183,10 @@ final class AuthController
         );
     }
 
-    public function logout(): void
+    public function logoutUser(): void
     {
+        AuthMiddleware::handleUser();
+
         AuthMiddleware::logout();
 
         Response::success(
@@ -187,10 +195,34 @@ final class AuthController
         );
     }
 
-    public function profile(): void
+    public function logoutAdmin(): void
     {
-        AuthMiddleware::handle();
+        AuthMiddleware::handleAdmin();
 
+        AuthMiddleware::logout();
+
+        Response::success(
+            [],
+            'Logout successfully.'
+        );
+    }
+
+    public function profileUser(): void
+    {
+        AuthMiddleware::handleUser();
+
+        $this->getProfile();
+    }
+
+    public function profileAdmin(): void
+    {
+        AuthMiddleware::handleAdmin();
+
+        $this->getProfile();
+    }
+
+    private function getProfile(): void
+    {
         $user = $this->repository->findByUserCode(
             AuthMiddleware::userCode()
         );

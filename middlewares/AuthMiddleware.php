@@ -5,9 +5,52 @@ declare(strict_types=1);
 final class AuthMiddleware
 {
     /**
-     * Check Authentication
+     * Check User Authentication
      */
-    public static function handle(): void
+    public static function handleUser(): void
+    {
+        self::startSession('RAVATRA_USER_SESSION');
+
+        self::validate();
+    }
+
+    /**
+     * Check Admin Authentication
+     */
+    public static function handleAdmin(): void
+    {
+        self::startSession('RAVATRA_ADMIN_SESSION');
+
+        self::validate();
+
+        if (self::role() !== ROLE_ADMIN) {
+
+            Response::error(
+                'Forbidden.',
+                HTTP_FORBIDDEN
+            );
+
+            return;
+        }
+    }
+
+    /**
+     * Start Correct Session
+     */
+    private static function startSession(string $sessionName): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+
+            session_name($sessionName);
+
+            session_start();
+        }
+    }
+
+    /**
+     * Validate Session
+     */
+    private static function validate(): void
     {
         if (!isset($_SESSION['user_code'])) {
 
@@ -15,6 +58,8 @@ final class AuthMiddleware
                 'Unauthorized.',
                 HTTP_UNAUTHORIZED
             );
+
+            return;
         }
 
         if (!isset($_SESSION['expired_at'])) {
@@ -25,6 +70,8 @@ final class AuthMiddleware
                 'Session expired.',
                 HTTP_UNAUTHORIZED
             );
+
+            return;
         }
 
         if (time() > (int) $_SESSION['expired_at']) {
@@ -35,6 +82,8 @@ final class AuthMiddleware
                 'Session expired.',
                 HTTP_UNAUTHORIZED
             );
+
+            return;
         }
     }
 
@@ -75,11 +124,11 @@ final class AuthMiddleware
      */
     public static function isAdmin(): bool
     {
-        return self::role() === 'ADMIN';
+        return self::role() === ROLE_ADMIN;
     }
 
     /**
-     * Destroy Session
+     * Destroy Current Session
      */
     public static function logout(): void
     {

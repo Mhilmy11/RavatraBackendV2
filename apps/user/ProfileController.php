@@ -13,16 +13,9 @@ final class ProfileController
 
     public function transactions(): void
     {
-        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        AuthMiddleware::handleUser();
 
-        if ($userId <= 0) {
-            Response::error(
-                'Unauthorized.',
-                HTTP_UNAUTHORIZED
-            );
-
-            return;
-        }
+        $userId = AuthMiddleware::userId();
 
         $transactions = $this->repository->getTransactionsByUserId(
             $userId

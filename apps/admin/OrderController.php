@@ -13,7 +13,7 @@ final class OrderController
 
     public function store(): void
     {
-        AuthMiddleware::handle();
+        AuthMiddleware::handleAdmin();
 
         $request = Request::json();
 
@@ -22,7 +22,6 @@ final class OrderController
         $notes = trim($request['notes'] ?? '');
 
         if ($productCode === '') {
-
             Response::error(
                 'Product is required.',
                 HTTP_BAD_REQUEST
@@ -32,7 +31,6 @@ final class OrderController
         }
 
         if ($dealPrice <= 0) {
-
             Response::error(
                 'Deal price is required.',
                 HTTP_BAD_REQUEST
@@ -46,7 +44,6 @@ final class OrderController
         );
 
         if (!$product) {
-
             Response::error(
                 'Product not found.',
                 HTTP_NOT_FOUND
@@ -74,7 +71,6 @@ final class OrderController
         ]);
 
         if (!$created) {
-
             Response::error(
                 'Failed to create order.',
                 HTTP_INTERNAL_SERVER_ERROR

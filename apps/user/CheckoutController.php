@@ -6,28 +6,20 @@ final class CheckoutController
 {
     private CheckoutRepository $repository;
 
-
     public function __construct()
     {
         $this->repository = new CheckoutRepository();
     }
 
+    public function show(string $checkoutToken): void
+    {
+        AuthMiddleware::handleUser();
 
-    /**
-     * Show Checkout
-     */
-    public function show(
-        string $checkoutToken
-    ): void {
-
-        AuthMiddleware::handle();
-
-        $checkout = $this->repository
-            ->findByToken($checkoutToken);
-
+        $checkout = $this->repository->findByToken(
+            $checkoutToken
+        );
 
         if (!$checkout) {
-
             Response::error(
                 'Checkout not found.',
                 HTTP_NOT_FOUND
@@ -35,14 +27,11 @@ final class CheckoutController
 
             return;
         }
-        /**
-         * Check Expired
-         */
+
         if (
             $checkout['expired_at'] !== null &&
             strtotime($checkout['expired_at']) < time()
         ) {
-
             Response::error(
                 'Checkout has expired.',
                 HTTP_BAD_REQUEST
@@ -50,13 +39,8 @@ final class CheckoutController
 
             return;
         }
-        /**
-         * Check Status
-         */
-        if (
-            $checkout['status'] !== 'PENDING'
-        ) {
 
+        if ($checkout['status'] !== STATUS_PENDING) {
             Response::error(
                 'Checkout is no longer available.',
                 HTTP_BAD_REQUEST
@@ -64,36 +48,28 @@ final class CheckoutController
 
             return;
         }
-        /**
-         * Current Customer
-         */
-        $currentUserId =
-            AuthMiddleware::userId();
 
-        /**
-         * Claim Checkout
-         */
-        if (
-            $checkout['user_id'] === null
-        ) {
+        $currentUserId = AuthMiddleware::userId();
 
-            $this->repository->claimCheckout(
+        if ($checkout['user_id'] === null) {
+            $claimed = $this->repository->claimCheckout(
                 (int) $checkout['id'],
                 $currentUserId
             );
 
+            if (!$claimed) {
+                Response::error(
+                    'Checkout could not be claimed.',
+                    HTTP_BAD_REQUEST
+                );
 
-            $checkout['user_id'] =
-                $currentUserId;
+                return;
+            }
+
+            $checkout['user_id'] = $currentUserId;
         }
-        /**
-         * Prevent another user claim
-         */
-        if (
-            (int) $checkout['user_id']
-            !== $currentUserId
-        ) {
 
+        if ((int) $checkout['user_id'] !== $currentUserId) {
             Response::error(
                 'This checkout belongs to another account.',
                 HTTP_FORBIDDEN
@@ -101,72 +77,44 @@ final class CheckoutController
 
             return;
         }
-        /**
-         * Response
-         */
+
         Response::success(
-
             [
-                'transaction_code'
-                => $checkout['transaction_code'],
-                'checkout_token'
-                => $checkout['checkout_token'],
-                'deal_price'
-                => $checkout['deal_price'],
-                'notes'
-                => $checkout['notes'],
+                'transaction_code' => $checkout['transaction_code'],
+                'checkout_token' => $checkout['checkout_token'],
+                'deal_price' => $checkout['deal_price'],
+                'notes' => $checkout['notes'],
                 'product' => [
-                    'product_code'
-                    => $checkout['product_code'],
-                    'product_name'
-                    => $checkout['product_name'],
-                    'slug'
-                    => $checkout['slug'],
-                    'product_type'
-                    => $checkout['product_type'],
-                    'thumbnail'
-                    => $checkout['thumbnail'],
-                    'schedule'
-                    => $checkout['schedule'],
-                    'start_date'
-                    => $checkout['start_date'],
-                    'start_end_time'
-                    => $checkout['start_end_time'],
-                    'location'
-                    => $checkout['location'],
-                    'product_price'
-                    => $checkout['product_price'],
+                    'product_code' => $checkout['product_code'],
+                    'product_name' => $checkout['product_name'],
+                    'slug' => $checkout['slug'],
+                    'product_type' => $checkout['product_type'],
+                    'thumbnail' => $checkout['thumbnail'],
+                    'schedule' => $checkout['schedule'],
+                    'start_date' => $checkout['start_date'],
+                    'start_end_time' => $checkout['start_end_time'],
+                    'location' => $checkout['location'],
+                    'product_price' => $checkout['product_price'],
                 ],
-                /**
-                 * Created By
-                 */
                 'created_by' => [
-                    'name'
-                    => $checkout['creator_name']
+                    'name' => $checkout['creator_name']
                 ]
-
             ],
-
             'Checkout found.'
-
         );
-
     }
 
     public function submitPaymentProof(string $checkoutToken): void
     {
-        // Authentication
-        AuthMiddleware::handle();
+        AuthMiddleware::handleUser();
 
-        $userId = (int) $_SESSION['user_id'];
+        $userId = AuthMiddleware::userId();
 
-        // Find Transaction
         $transaction = $this->repository->findByCheckoutToken(
             $checkoutToken
         );
 
         if (!$transaction) {
-
             Response::error(
                 'Transaction not found.',
                 HTTP_NOT_FOUND
@@ -175,9 +123,7 @@ final class CheckoutController
             return;
         }
 
-        // Check Transaction Owner
         if ((int) $transaction['user_id'] !== $userId) {
-
             Response::error(
                 'You are not allowed to access this transaction.',
                 HTTP_FORBIDDEN
@@ -186,9 +132,7 @@ final class CheckoutController
             return;
         }
 
-        // Check Status
-        if ($transaction['status'] !== 'PENDING') {
-
+        if ($transaction['status'] !== STATUS_PENDING) {
             Response::error(
                 'Payment proof cannot be submitted for this transaction.',
                 HTTP_BAD_REQUEST
@@ -197,12 +141,10 @@ final class CheckoutController
             return;
         }
 
-        // Check Expiration
         if (
             !empty($transaction['expired_at']) &&
             strtotime($transaction['expired_at']) < time()
         ) {
-
             Response::error(
                 'This checkout has expired.',
                 HTTP_BAD_REQUEST
@@ -211,11 +153,9 @@ final class CheckoutController
             return;
         }
 
-        // Get Uploaded File
         $file = Request::file('payment_proof');
 
         if (!$file) {
-
             Response::error(
                 'Payment proof is required.',
                 HTTP_BAD_REQUEST
@@ -224,9 +164,7 @@ final class CheckoutController
             return;
         }
 
-        // Check Upload Error
         if ($file['error'] !== UPLOAD_ERR_OK) {
-
             Response::error(
                 'Failed to upload payment proof.',
                 HTTP_BAD_REQUEST
@@ -235,9 +173,7 @@ final class CheckoutController
             return;
         }
 
-        // Maximum File Size: 5 MB
         if ($file['size'] > 5 * 1024 * 1024) {
-
             Response::error(
                 'Payment proof must not exceed 5 MB.',
                 HTTP_BAD_REQUEST
@@ -246,10 +182,11 @@ final class CheckoutController
             return;
         }
 
-        // Detect MIME Type
         $finfo = new finfo(FILEINFO_MIME_TYPE);
 
-        $mimeType = $finfo->file($file['tmp_name']);
+        $mimeType = $finfo->file(
+            $file['tmp_name']
+        );
 
         $allowedTypes = [
             'image/jpeg' => 'jpg',
@@ -258,7 +195,6 @@ final class CheckoutController
         ];
 
         if (!isset($allowedTypes[$mimeType])) {
-
             Response::error(
                 'Invalid payment proof format. Only JPG, PNG, and PDF are allowed.',
                 HTTP_BAD_REQUEST
@@ -267,18 +203,16 @@ final class CheckoutController
             return;
         }
 
-        // Generate File Name
         $extension = $allowedTypes[$mimeType];
 
-        $fileName = $transaction['transaction_code']
+        $fileName =
+            $transaction['transaction_code']
             . '_'
             . bin2hex(random_bytes(8))
             . '.'
             . $extension;
 
-        // Ensure Storage Directory Exists
         if (!is_dir(PAYMENT_UPLOAD_PATH)) {
-
             mkdir(
                 PAYMENT_UPLOAD_PATH,
                 0755,
@@ -286,16 +220,15 @@ final class CheckoutController
             );
         }
 
-        $destination = PAYMENT_UPLOAD_PATH . $fileName;
+        $destination =
+            PAYMENT_UPLOAD_PATH . $fileName;
 
-        // Move File
         if (
             !move_uploaded_file(
                 $file['tmp_name'],
                 $destination
             )
         ) {
-
             Response::error(
                 'Failed to save payment proof.',
                 HTTP_INTERNAL_SERVER_ERROR
@@ -304,7 +237,6 @@ final class CheckoutController
             return;
         }
 
-        // Save Relative Path
         $paymentProof = 'payment/' . $fileName;
 
         $updated = $this->repository->submitPaymentProof(
@@ -313,8 +245,6 @@ final class CheckoutController
         );
 
         if (!$updated) {
-
-            // Remove uploaded file if database update fails
             if (file_exists($destination)) {
                 unlink($destination);
             }

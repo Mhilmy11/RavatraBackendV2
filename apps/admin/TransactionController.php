@@ -9,7 +9,6 @@ final class TransactionController
     private TransactionRepository $repository;
     private InvoiceService $invoiceService;
 
-
     public function __construct()
     {
         $this->repository = new TransactionRepository();
@@ -18,6 +17,8 @@ final class TransactionController
 
     public function index(): never
     {
+        AuthMiddleware::handleAdmin();
+
         $filters = [];
 
         if (!empty($_GET['search'])) {
@@ -36,7 +37,6 @@ final class TransactionController
             ? min(50, max(1, (int) $_GET['limit']))
             : 10;
 
-
         $filters['page'] = $page;
         $filters['limit'] = $limit;
 
@@ -45,7 +45,6 @@ final class TransactionController
         $total = $this->repository->countAll($filters);
 
         $totalPages = (int) ceil($total / $limit);
-
 
         Response::success(
             [
@@ -63,9 +62,10 @@ final class TransactionController
 
     public function show(string $transactionCode): void
     {
+        AuthMiddleware::handleAdmin();
+
         $transaction = $this->repository
             ->findByTransactionCode($transactionCode);
-
 
         if (!$transaction) {
             Response::error(
@@ -75,7 +75,6 @@ final class TransactionController
 
             return;
         }
-
 
         Response::success(
             $transaction,
@@ -85,6 +84,8 @@ final class TransactionController
 
     public function approve(string $transactionCode): void
     {
+        AuthMiddleware::handleAdmin();
+
         $transaction = $this->repository
             ->findByTransactionCode($transactionCode);
 
@@ -97,7 +98,7 @@ final class TransactionController
             return;
         }
 
-        if ($transaction['status'] !== 'WAITING_APPROVAL') {
+        if ($transaction['status'] !== STATUS_WAITING_APPROVAL) {
             Response::error(
                 'Only transactions with WAITING_APPROVAL status can be approved',
                 HTTP_BAD_REQUEST
@@ -106,22 +107,12 @@ final class TransactionController
             return;
         }
 
-        $adminId = (int) ($_SESSION['user_id'] ?? 0);
-
-        if ($adminId <= 0) {
-            Response::error(
-                'Unauthorized',
-                HTTP_UNAUTHORIZED
-            );
-
-            return;
-        }
+        $adminId = AuthMiddleware::userId();
 
         $approved = $this->repository->approve(
             $transactionCode,
             $adminId
         );
-
 
         if (!$approved) {
             Response::error(
@@ -132,7 +123,6 @@ final class TransactionController
             return;
         }
 
-
         Response::success(
             null,
             'Transaction approved successfully'
@@ -141,6 +131,8 @@ final class TransactionController
 
     public function reject(string $transactionCode): void
     {
+        AuthMiddleware::handleAdmin();
+
         $transaction = $this->repository
             ->findByTransactionCode($transactionCode);
 
@@ -153,7 +145,7 @@ final class TransactionController
             return;
         }
 
-        if ($transaction['status'] !== 'WAITING_APPROVAL') {
+        if ($transaction['status'] !== STATUS_WAITING_APPROVAL) {
             Response::error(
                 'Only transactions with WAITING_APPROVAL status can be rejected',
                 HTTP_BAD_REQUEST
@@ -162,10 +154,7 @@ final class TransactionController
             return;
         }
 
-        $input = json_decode(
-            file_get_contents('php://input'),
-            true
-        );
+        $input = Request::json();
 
         $rejectReason = trim(
             $input['reject_reason'] ?? ''
@@ -180,23 +169,13 @@ final class TransactionController
             return;
         }
 
-        $adminId = (int) ($_SESSION['user_id'] ?? 0);
-
-        if ($adminId <= 0) {
-            Response::error(
-                'Unauthorized',
-                HTTP_UNAUTHORIZED
-            );
-
-            return;
-        }
+        $adminId = AuthMiddleware::userId();
 
         $rejected = $this->repository->reject(
             $transactionCode,
             $rejectReason,
             $adminId
         );
-
 
         if (!$rejected) {
             Response::error(
@@ -207,7 +186,6 @@ final class TransactionController
             return;
         }
 
-
         Response::success(
             null,
             'Transaction rejected successfully'
@@ -216,9 +194,8 @@ final class TransactionController
 
     public function generateInvoice(string $transactionCode): void
     {
-        /**
-         * Find Transaction
-         */
+        AuthMiddleware::handleAdmin();
+
         $transaction = $this->repository->findForInvoice(
             $transactionCode
         );
@@ -232,11 +209,7 @@ final class TransactionController
             return;
         }
 
-        /**
-         * Invoice can only be generated
-         * for PAID transaction
-         */
-        if ($transaction['status'] !== 'PAID') {
+        if ($transaction['status'] !== STATUS_PAID) {
             Response::error(
                 'Invoice can only be generated for paid transactions',
                 HTTP_BAD_REQUEST
@@ -245,9 +218,6 @@ final class TransactionController
             return;
         }
 
-        /**
-         * Invoice already exists
-         */
         if (
             !empty($transaction['invoice_number']) &&
             !empty($transaction['invoice_path'])
@@ -266,16 +236,10 @@ final class TransactionController
         }
 
         try {
-            /**
-             * Generate Invoice
-             */
             $invoice = $this->invoiceService->generate(
                 $transaction
             );
 
-            /**
-             * Save Invoice Information
-             */
             $saved = $this->repository->saveInvoice(
                 (int) $transaction['id'],
                 $invoice['invoice_number'],
@@ -292,9 +256,6 @@ final class TransactionController
                 return;
             }
 
-            /**
-             * Success
-             */
             Response::success(
                 $invoice,
                 'Invoice generated successfully'

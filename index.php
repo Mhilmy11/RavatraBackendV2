@@ -12,6 +12,23 @@ Env::load(BASE_PATH . '/.env');
 // SESSION
 // =========================
 
+$requestPath = trim(
+    parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH),
+    '/'
+);
+
+// Hilangkan prefix "api" jika ada
+if (str_starts_with($requestPath, 'api/')) {
+    $requestPath = substr($requestPath, 4);
+}
+
+// Tentukan session berdasarkan area
+if (str_starts_with($requestPath, 'admin/')) {
+    session_name('RAVATRA_ADMIN_SESSION');
+} else {
+    session_name('RAVATRA_USER_SESSION');
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
