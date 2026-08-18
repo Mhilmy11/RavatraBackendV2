@@ -65,4 +65,47 @@ final class ProfileRepository
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function findInvoiceForUser(
+        string $transactionCode,
+        int $userId
+    ): ?array {
+        $sql = "
+        SELECT
+            t.id,
+            t.transaction_code,
+            t.user_id,
+            t.status,
+            t.invoice_number,
+            t.invoice_path,
+            t.invoice_generated_at
+
+        FROM transactions t
+
+        WHERE t.transaction_code = :transaction_code
+            AND t.user_id = :user_id
+
+        LIMIT 1
+    ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->bindValue(
+            ':transaction_code',
+            $transactionCode,
+            PDO::PARAM_STR
+        );
+
+        $stmt->bindValue(
+            ':user_id',
+            $userId,
+            PDO::PARAM_INT
+        );
+
+        $stmt->execute();
+
+        $transaction = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $transaction ?: null;
+    }
 }

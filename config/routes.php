@@ -8,6 +8,7 @@ Router::post('/account/login', [AuthController::class, 'loginUser']);
 Router::post('/account/logout', [AuthController::class, 'logoutUser']);
 Router::get('/account/profile', [AuthController::class, 'profileUser']);
 Router::get('/account/transactions', [ProfileController::class, 'transactions']);
+Router::get('/account/transactions/{transaction_code}/invoice', [ProfileController::class, 'downloadInvoice']);
 
 
 Router::get('/products/{slug}', [ProductController::class, 'show']);
